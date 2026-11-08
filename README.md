@@ -45,8 +45,9 @@ Environment variables, validated at startup by `src/config.ts` (see `.env.exampl
     Credentials and `GCP_PROJECT`. Each model is served from its own `MODEL_LOCATION`, wherever Vertex
     offers it, independent of the app's region. Only EU locations (`eu`, `europe-west1`, …) are accepted
     unless `MODEL_ALLOW_NON_EU=true`.
-  - `anthropic` or `google` call the Anthropic or Gemini API directly with `ANTHROPIC_API_KEY` or
-    `GOOGLE_GENERATIVE_AI_API_KEY`, to test with a real model without GCP. They're refused in production.
+  - `anthropic`, `google` or `openai` call the Anthropic, Gemini or OpenAI API directly with
+    `ANTHROPIC_API_KEY`, `GOOGLE_GENERATIVE_AI_API_KEY` or `OPENAI_API_KEY`, to test with a real model
+    without GCP. They're refused in production.
 
   `npm run model:ping` sends the configured model one short prompt and prints the reply.
 

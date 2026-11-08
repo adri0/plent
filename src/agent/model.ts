@@ -2,6 +2,7 @@ import { createAnthropic } from '@ai-sdk/anthropic';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { createVertex } from '@ai-sdk/google-vertex';
 import { createVertexAnthropic } from '@ai-sdk/google-vertex/anthropic';
+import { createOpenAI } from '@ai-sdk/openai';
 import type { LanguageModel } from 'ai';
 
 import type { Config, ModelConfig } from '../config.ts';
@@ -20,5 +21,7 @@ export function createModel(model: ModelConfig, gcpProject: Config['gcpProject']
       return createAnthropic({ apiKey: model.apiKey, ...baseURL })(model.id);
     case 'google':
       return createGoogleGenerativeAI({ apiKey: model.apiKey, ...baseURL })(model.id);
+    case 'openai':
+      return createOpenAI({ apiKey: model.apiKey, ...baseURL })(model.id);
   }
 }

@@ -16,6 +16,7 @@ describe('createModel', () => {
     ],
     [{ provider: 'anthropic', id: 'claude-haiku-5-5', apiKey: 'test-key' }, 'anthropic'],
     [{ provider: 'google', id: 'gemini-3.5-flash', apiKey: 'test-key' }, 'google'],
+    [{ provider: 'openai', id: 'gpt-5-mini', apiKey: 'test-key' }, 'openai'],
   ])('builds %o', (config, provider) => {
     const model = createModel(config, 'plent-dev');
     expect(model).toMatchObject({ modelId: config.id });

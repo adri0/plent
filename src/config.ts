@@ -32,14 +32,19 @@ const vertexModelSchema = z
     path: ['location'],
   });
 
-// Straight to the Anthropic or Gemini API with an API key, for local testing without GCP.
+// Straight to the Anthropic, Gemini or OpenAI API with an API key, for local testing without GCP.
 // No data residency, so never in production.
+const API_KEY_HINT = 'set ANTHROPIC_API_KEY, GOOGLE_GENERATIVE_AI_API_KEY or OPENAI_API_KEY';
+const API_KEY_ENV = {
+  anthropic: 'ANTHROPIC_API_KEY',
+  google: 'GOOGLE_GENERATIVE_AI_API_KEY',
+  openai: 'OPENAI_API_KEY',
+} as const;
+
 const apiModelSchema = z.object({
-  provider: z.enum(['anthropic', 'google']),
+  provider: z.enum(['anthropic', 'google', 'openai']),
   id: z.string().min(1),
-  apiKey: z
-    .string({ error: 'set ANTHROPIC_API_KEY or GOOGLE_GENERATIVE_AI_API_KEY' })
-    .min(1, 'set ANTHROPIC_API_KEY or GOOGLE_GENERATIVE_AI_API_KEY'),
+  apiKey: z.string({ error: API_KEY_HINT }).min(1, API_KEY_HINT),
   baseUrl: z.url().optional(),
 });
 
@@ -73,6 +78,10 @@ export type ModelConfig = z.infer<typeof modelSchema>;
 
 const envBool = z.stringbool().default(false);
 
+function isApiProvider(provider: string | undefined): provider is keyof typeof API_KEY_ENV {
+  return provider !== undefined && Object.hasOwn(API_KEY_ENV, provider);
+}
+
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
   // Every field is passed; the provider's schema keeps the ones it uses.
   const model =
@@ -84,10 +93,9 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
           location: env.MODEL_LOCATION,
           baseUrl: env.MODEL_BASE_URL,
           allowNonEu: envBool.parse(env.MODEL_ALLOW_NON_EU),
-          apiKey:
-            env.MODEL_PROVIDER === 'google'
-              ? env.GOOGLE_GENERATIVE_AI_API_KEY
-              : env.ANTHROPIC_API_KEY,
+          apiKey: isApiProvider(env.MODEL_PROVIDER)
+            ? env[API_KEY_ENV[env.MODEL_PROVIDER]]
+            : undefined,
         };
 
   const result = configSchema.safeParse({

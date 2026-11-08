@@ -34,6 +34,7 @@
     "@ai-sdk/anthropic": "4.0.99",
     "@ai-sdk/google": "4.0.114",
     "@ai-sdk/google-vertex": "5.0.134",
+    "@ai-sdk/openai": "4.0.111",
     "ai": "7.0.165",
     "kysely": "0.29.8",
     "pg": "8.23.1",

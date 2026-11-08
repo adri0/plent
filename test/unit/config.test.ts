@@ -111,6 +111,17 @@ describe('loadConfig', () => {
       expect(config.model).toMatchObject({ provider: 'google', apiKey: 'gm-test' });
     });
 
+    it('read the OpenAI key', () => {
+      const config = loadConfig({
+        ...base,
+        MODEL_PROVIDER: 'openai',
+        MODEL_ID: 'gpt-5-mini',
+        OPENAI_API_KEY: 'sk-test',
+        ANTHROPIC_API_KEY: 'unused',
+      });
+      expect(config.model).toEqual({ provider: 'openai', id: 'gpt-5-mini', apiKey: 'sk-test' });
+    });
+
     it('need no GCP project or location', () => {
       const config = loadConfig({
         ...base,
@@ -141,7 +152,7 @@ describe('loadConfig', () => {
   });
 
   it('rejects an unknown provider', () => {
-    expect(() => loadConfig({ ...base, MODEL_PROVIDER: 'openai', MODEL_ID: 'x' })).toThrow(
+    expect(() => loadConfig({ ...base, MODEL_PROVIDER: 'mistral', MODEL_ID: 'x' })).toThrow(
       /model\.provider/,
     );
   });
