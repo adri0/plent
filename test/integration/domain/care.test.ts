@@ -117,6 +117,9 @@ describe('logging care', () => {
     [{ occurredOn: '2026-11-13' }, /in the future/],
     [{ occurredOn: 'yesterday' }, /YYYY-MM-DD/],
     [{ recheckInDays: 2 }, /skipped only/],
+    [{ action: 'skipped' as const }, /skipped needs recheck_in_days/],
+    [{ action: 'skipped' as const, recheckInDays: 0 }, /1 to 366/],
+    [{ action: 'skipped' as const, recheckInDays: 1.5 }, /1 to 366/],
   ])('rejects %o', async (extra, message) => {
     const { h, pothos } = await withPlants();
     await expect(

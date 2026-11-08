@@ -51,14 +51,35 @@ describe('notes', () => {
     await addNote(t.db, { householdId: h.id, plantId, body: 'room again' });
   });
 
-  it(`caps active household-wide notes at ${String(HOUSEHOLD_NOTE_CAP)}`, async () => {
+  it(`caps a household at ${String(HOUSEHOLD_NOTE_CAP)} active notes, plant notes included`, async () => {
     const h = await newHousehold(t.db);
+    const monstera = await plantIn(h.id);
+    const fern = await plantIn(h.id, 'Fern');
+    for (let i = 0; i < 5; i++) {
+      await addNote(t.db, { householdId: h.id, plantId: monstera, body: `monstera ${String(i)}` });
+    }
+    for (let i = 0; i < 2; i++) {
+      await addNote(t.db, { householdId: h.id, plantId: fern, body: `fern ${String(i)}` });
+    }
+    await addNote(t.db, { householdId: h.id, body: 'north-facing flat' });
+    for (const plantId of [fern, undefined]) {
+      await expect(addNote(t.db, { householdId: h.id, plantId, body: 'one more' })).rejects.toThrow(
+        /already 8 active notes in this household/,
+      );
+    }
+  });
+
+  it("doesn't count notes on archived plants", async () => {
+    const h = await newHousehold(t.db);
+    const dead = await plantIn(h.id, 'Rosemary');
+    for (let i = 0; i < 5; i++) {
+      await addNote(t.db, { householdId: h.id, plantId: dead, body: `rosemary ${String(i)}` });
+    }
+    await archivePlant(t.db, h.id, dead, 'died');
     for (let i = 0; i < HOUSEHOLD_NOTE_CAP; i++) {
       await addNote(t.db, { householdId: h.id, body: `note ${String(i)}` });
     }
-    await expect(addNote(t.db, { householdId: h.id, body: 'one more' })).rejects.toThrow(
-      /household-wide/,
-    );
+    expect(await listActiveNotes(t.db, h.id)).toHaveLength(HOUSEHOLD_NOTE_CAP);
   });
 
   it('resolves a note once, keeping it', async () => {

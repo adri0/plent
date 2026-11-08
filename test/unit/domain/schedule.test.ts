@@ -41,11 +41,7 @@ describe('next_due rules', () => {
 
   describe('skipped', () => {
     it('is today plus the recheck days', () => {
-      expect(nextDueAfterSkip(today, 9, 2)).toBe('2026-11-14');
-    });
-
-    it('waits a full interval without a recheck', () => {
-      expect(nextDueAfterSkip(today, 30)).toBe('2026-12-12');
+      expect(nextDueAfterSkip(today, 2)).toBe('2026-11-14');
     });
   });
 

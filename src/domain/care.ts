@@ -14,7 +14,7 @@ export interface LogCareInput {
   taskType: TaskType;
   action: CareAction;
   occurredOn?: IsoDate | undefined; // defaults to today
-  recheckInDays?: number | undefined; // skipped only
+  recheckInDays?: number | undefined; // required with skipped, refused with done
   today: IsoDate;
   personId?: string | undefined;
   sourceMessageId?: string | undefined;
@@ -31,13 +31,19 @@ export async function logCare(db: Db, input: LogCareInput): Promise<LoggedCare[]
   const occurredOn = input.occurredOn ?? input.today;
   if (!isIsoDate(occurredOn)) throw new DomainError('invalid_input', 'date must be YYYY-MM-DD');
   checkNotFuture(occurredOn, input.today);
-  if (input.recheckInDays !== undefined) {
-    if (input.action !== 'skipped') {
-      throw new DomainError('invalid_input', 'recheck_in_days goes with skipped only');
+  const recheckInDays = input.recheckInDays;
+  if (input.action === 'skipped') {
+    if (recheckInDays === undefined) {
+      throw new DomainError('invalid_input', 'skipped needs recheck_in_days: when to check again');
     }
-    if (!Number.isInteger(input.recheckInDays) || input.recheckInDays < 1) {
-      throw new DomainError('invalid_input', 'recheck_in_days must be a whole number of 1 or more');
+    if (!Number.isInteger(recheckInDays) || recheckInDays < 1 || recheckInDays > 366) {
+      throw new DomainError(
+        'invalid_input',
+        'recheck_in_days must be a whole number from 1 to 366',
+      );
     }
+  } else if (recheckInDays !== undefined) {
+    throw new DomainError('invalid_input', 'recheck_in_days goes with skipped only');
   }
 
   return db.transaction().execute(async (trx) => {
@@ -64,9 +70,9 @@ export async function logCare(db: Db, input: LogCareInput): Promise<LoggedCare[]
       let nextDue: IsoDate | null = null;
       if (target.scheduleId !== null && target.intervalDays !== null) {
         nextDue =
-          input.action === 'done'
+          recheckInDays === undefined
             ? nextDueAfterDone(occurredOn, target.intervalDays, previousDone)
-            : nextDueAfterSkip(input.today, target.intervalDays, input.recheckInDays);
+            : nextDueAfterSkip(input.today, recheckInDays);
         await trx
           .updateTable('care_schedules')
           .set({ next_due: nextDue, updated_at: new Date() })

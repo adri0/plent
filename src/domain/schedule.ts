@@ -19,14 +19,10 @@ export function nextDueAfterDone(
   return addDays(previousDone === undefined ? doneOn : maxDate(doneOn, previousDone), intervalDays);
 }
 
-// Skipped ("soil still wet"): check again after `recheckInDays`; without one, the task waits a
-// full interval from today.
-export function nextDueAfterSkip(
-  today: IsoDate,
-  intervalDays: number,
-  recheckInDays?: number,
-): IsoDate {
-  return addDays(today, recheckInDays ?? intervalDays);
+// Skipped ("soil still wet"): check again after `recheckInDays`, which the model always gives:
+// how long to wait is its call, not a fixed rule's.
+export function nextDueAfterSkip(today: IsoDate, recheckInDays: number): IsoDate {
+  return addDays(today, recheckInDays);
 }
 
 // Interval change: the last done date plus the new interval, or today plus it if never done.

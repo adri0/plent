@@ -7,8 +7,8 @@ import { getActivePlant } from './plants.ts';
 // deleted. Capped so the household block stays short; past a cap, the agent resolves or
 // consolidates notes first.
 
-export const PLANT_NOTE_CAP = 5; // active notes per plant
-export const HOUSEHOLD_NOTE_CAP = 8; // active household-wide notes (no plant)
+export const HOUSEHOLD_NOTE_CAP = 8; // active notes in a household, with or without a plant
+export const PLANT_NOTE_CAP = 5; // active notes on one plant
 const MAX_BODY_LENGTH = 300;
 
 export interface NewNoteInput {
@@ -30,28 +30,24 @@ export async function addNote(db: Db, input: NewNoteInput): Promise<PlantNote> {
   }
 
   return db.transaction().execute(async (trx) => {
-    let count = trx
-      .selectFrom('plant_notes')
-      .select((eb) => eb.fn.countAll<string>().as('n'))
-      .where('household_id', '=', input.householdId)
-      .where('resolved_at', 'is', null);
-    let cap: number;
-    let scope: string;
-    if (input.plantId === undefined) {
-      count = count.where('plant_id', 'is', null);
-      cap = HOUSEHOLD_NOTE_CAP;
-      scope = 'household-wide';
-    } else {
-      const plant = await getActivePlant(trx, input.householdId, input.plantId);
-      count = count.where('plant_id', '=', plant.id);
-      cap = PLANT_NOTE_CAP;
-      scope = `for ${plant.name}`;
-    }
-    const { n } = await count.executeTakeFirstOrThrow();
-    if (Number(n) >= cap) {
+    const plant =
+      input.plantId === undefined
+        ? undefined
+        : await getActivePlant(trx, input.householdId, input.plantId);
+    const total = await countActiveNotes(trx, input.householdId);
+    if (total >= HOUSEHOLD_NOTE_CAP) {
       throw new DomainError(
         'note_cap_reached',
-        `already ${String(cap)} active notes ${scope}: resolve or merge one first`,
+        `already ${String(HOUSEHOLD_NOTE_CAP)} active notes in this household: resolve or merge one first`,
+      );
+    }
+    if (
+      plant !== undefined &&
+      (await countActiveNotes(trx, input.householdId, plant.id)) >= PLANT_NOTE_CAP
+    ) {
+      throw new DomainError(
+        'note_cap_reached',
+        `already ${String(PLANT_NOTE_CAP)} active notes for ${plant.name}: resolve or merge one first`,
       );
     }
 
@@ -87,17 +83,29 @@ export async function resolveNote(
   return note;
 }
 
-// Active notes: household-wide ones and those on active plants, oldest first.
+// Active notes: unresolved, on the household or on one of its active plants (notes on
+// archived plants are history), oldest first.
 export async function listActiveNotes(db: Db, householdId: string): Promise<PlantNote[]> {
+  return activeNotes(db, householdId)
+    .selectAll('plant_notes')
+    .orderBy('plant_notes.created_at')
+    .execute();
+}
+
+async function countActiveNotes(db: Db, householdId: string, plantId?: string): Promise<number> {
+  let query = activeNotes(db, householdId).select((eb) => eb.fn.countAll<string>().as('n'));
+  if (plantId !== undefined) query = query.where('plant_notes.plant_id', '=', plantId);
+  const { n } = await query.executeTakeFirstOrThrow();
+  return Number(n);
+}
+
+function activeNotes(db: Db, householdId: string) {
   return db
     .selectFrom('plant_notes')
     .leftJoin('plants', 'plants.id', 'plant_notes.plant_id')
-    .selectAll('plant_notes')
     .where('plant_notes.household_id', '=', householdId)
     .where('plant_notes.resolved_at', 'is', null)
     .where((eb) =>
       eb.or([eb('plant_notes.plant_id', 'is', null), eb('plants.status', '=', 'active')]),
-    )
-    .orderBy('plant_notes.created_at')
-    .execute();
+    );
 }
