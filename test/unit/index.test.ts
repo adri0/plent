@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { BOT_NAME } from '../src/index.js';
+import { BOT_NAME } from '../../src/index.ts';
 
 describe('index', () => {
   it('names the bot Ent', () => {
