@@ -1,6 +1,6 @@
 # plent
 
-Ent, a plant care WhatsApp bot that tracks household plants and sends daily care reminders.
+Ent, a plant care assistant that tracks household plants and sends daily care reminders.
 
 ## Development
 

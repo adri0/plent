@@ -2,7 +2,7 @@
   "name": "plent",
   "version": "0.0.0",
   "private": true,
-  "description": "Ent, a plant care WhatsApp bot",
+  "description": "Ent, a plant care assistant",
   "type": "module",
   "engines": {
     "node": ">=26"
