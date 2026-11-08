@@ -1,15 +1,10 @@
 {
   "compilerOptions": {
     "target": "ES2024",
-    "lib": [
-      "ES2024",
-      "ESNext.Temporal"
-    ],
+    "lib": ["ES2024", "ESNext.Temporal"],
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
-    "types": [
-      "node"
-    ],
+    "types": ["node"],
     "strict": true,
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": true,
@@ -26,11 +21,5 @@
     "erasableSyntaxOnly": true,
     "allowImportingTsExtensions": true
   },
-  "include": [
-    "src",
-    "test",
-    "scripts",
-    "evals",
-    "*.ts"
-  ]
+  "include": ["src", "test", "scripts", "evals", "*.ts"]
 }
