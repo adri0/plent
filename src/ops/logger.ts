@@ -2,9 +2,9 @@ import { pino, type Logger, type LoggerOptions } from 'pino';
 
 export type { Logger };
 
-// Logs carry IDs and statuses only. These keys hold message text or prompts, so they are
-// removed if they ever reach a log call, at the top level or one object down.
-const BODY_KEYS = ['body', 'text', 'prompt', 'messages', 'reply', 'content'];
+// Logs carry IDs and statuses only. These keys hold message text, prompts or secrets, so they
+// are removed if they ever reach a log call, at the top level or one object down.
+const BODY_KEYS = ['body', 'text', 'prompt', 'messages', 'reply', 'content', 'apiKey'];
 export const REDACT_PATHS = [...BODY_KEYS, ...BODY_KEYS.map((key) => `*.${key}`)];
 
 // Cloud Logging reads `severity` from JSON lines.

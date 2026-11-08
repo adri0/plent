@@ -13,6 +13,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint .",
+    "model:ping": "node --env-file-if-exists=.env scripts/model-ping.ts",
     "test": "vitest run --project unit",
     "test:integration": "node --env-file-if-exists=.env node_modules/vitest/vitest.mjs run --project integration",
     "test:watch": "vitest --project unit",
@@ -30,6 +31,10 @@
     "vitest": "5.1.0"
   },
   "dependencies": {
+    "@ai-sdk/anthropic": "4.0.99",
+    "@ai-sdk/google": "4.0.114",
+    "@ai-sdk/google-vertex": "5.0.134",
+    "ai": "7.0.165",
     "kysely": "0.29.8",
     "pg": "8.23.1",
     "pino": "10.4.0",

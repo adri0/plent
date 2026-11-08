@@ -17,10 +17,11 @@ export const EU_LOCATIONS: ReadonlySet<string> = new Set([
   'europe-west12',
 ]);
 
-const modelSchema = z
+// Through Vertex AI (GCP credentials): each model is served from wherever Vertex offers it,
+// independent of the app's region.
+const vertexModelSchema = z
   .object({
-    // Each model is served from wherever Vertex offers it, independent of the app's region.
-    provider: z.enum(['anthropic', 'google']),
+    provider: z.enum(['vertex-anthropic', 'vertex-google']),
     id: z.string().min(1),
     location: z.string().min(1),
     baseUrl: z.url().optional(),
@@ -31,14 +32,41 @@ const modelSchema = z
     path: ['location'],
   });
 
-const configSchema = z.object({
-  env: z.enum(['development', 'test', 'production']),
-  logLevel: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']),
-  databaseUrl: z.string().min(1),
-  gcpProject: z.string().min(1).optional(),
-  // Unset until the agent needs it, so the database and domain work run without a model.
-  model: modelSchema.optional(),
+// Straight to the Anthropic or Gemini API with an API key, for local testing without GCP.
+// No data residency, so never in production.
+const apiModelSchema = z.object({
+  provider: z.enum(['anthropic', 'google']),
+  id: z.string().min(1),
+  apiKey: z
+    .string({ error: 'set ANTHROPIC_API_KEY or GOOGLE_GENERATIVE_AI_API_KEY' })
+    .min(1, 'set ANTHROPIC_API_KEY or GOOGLE_GENERATIVE_AI_API_KEY'),
+  baseUrl: z.url().optional(),
 });
+
+const modelSchema = z.discriminatedUnion('provider', [vertexModelSchema, apiModelSchema]);
+
+const configSchema = z
+  .object({
+    env: z.enum(['development', 'test', 'production']),
+    logLevel: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']),
+    databaseUrl: z.string().min(1),
+    gcpProject: z.string().min(1).optional(),
+    // Unset until the agent needs it, so the database and domain work run without a model.
+    model: modelSchema.optional(),
+  })
+  .superRefine((c, ctx) => {
+    if (c.model === undefined) return;
+    if (c.model.provider.startsWith('vertex-') && c.gcpProject === undefined) {
+      ctx.addIssue({ code: 'custom', message: 'required for Vertex models', path: ['gcpProject'] });
+    }
+    if (!c.model.provider.startsWith('vertex-') && c.env === 'production') {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'API-key providers are for local testing; production uses Vertex',
+        path: ['model', 'provider'],
+      });
+    }
+  });
 
 export type Config = z.infer<typeof configSchema>;
 export type ModelConfig = z.infer<typeof modelSchema>;
@@ -46,6 +74,7 @@ export type ModelConfig = z.infer<typeof modelSchema>;
 const envBool = z.stringbool().default(false);
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
+  // Every field is passed; the provider's schema keeps the ones it uses.
   const model =
     env.MODEL_ID === undefined
       ? undefined
@@ -55,6 +84,10 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
           location: env.MODEL_LOCATION,
           baseUrl: env.MODEL_BASE_URL,
           allowNonEu: envBool.parse(env.MODEL_ALLOW_NON_EU),
+          apiKey:
+            env.MODEL_PROVIDER === 'google'
+              ? env.GOOGLE_GENERATIVE_AI_API_KEY
+              : env.ANTHROPIC_API_KEY,
         };
 
   const result = configSchema.safeParse({
