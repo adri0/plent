@@ -1,0 +1,44 @@
+{
+  "name": "plent",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Ent, a plant care assistant",
+  "type": "module",
+  "engines": {
+    "node": ">=26"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "db:migrate": "node --env-file-if-exists=.env scripts/migrate.ts",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "eslint .",
+    "model:ping": "node --env-file-if-exists=.env scripts/model-ping.ts",
+    "test": "vitest run --project unit",
+    "test:integration": "node --env-file-if-exists=.env node_modules/vitest/vitest.mjs run --project integration",
+    "test:watch": "vitest --project unit",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@types/node": "26.6.6",
+    "@types/pg": "8.23.1",
+    "eslint": "10.14.0",
+    "eslint-config-prettier": "10.1.8",
+    "prettier": "3.9.10",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.72.1",
+    "vitest": "5.1.0"
+  },
+  "dependencies": {
+    "@ai-sdk/anthropic": "4.0.99",
+    "@ai-sdk/google": "4.0.114",
+    "@ai-sdk/google-vertex": "5.0.134",
+    "@ai-sdk/openai": "4.0.111",
+    "ai": "7.0.165",
+    "kysely": "0.29.8",
+    "pg": "8.23.1",
+    "pino": "10.4.0",
+    "zod": "4.6.7"
+  }
+}
