@@ -7,7 +7,7 @@ import { getActivePlant } from './plants.ts';
 // deleted. Capped so the household block stays short; past a cap, the agent resolves or
 // consolidates notes first.
 
-export const HOUSEHOLD_NOTE_CAP = 8; // active notes in a household, with or without a plant
+export const HOUSEHOLD_NOTE_CAP = 25; // active notes in a household, with or without a plant
 export const PLANT_NOTE_CAP = 5; // active notes on one plant
 const MAX_BODY_LENGTH = 300;
 

@@ -53,18 +53,22 @@ describe('notes', () => {
 
   it(`caps a household at ${String(HOUSEHOLD_NOTE_CAP)} active notes, plant notes included`, async () => {
     const h = await newHousehold(t.db);
-    const monstera = await plantIn(h.id);
-    const fern = await plantIn(h.id, 'Fern');
-    for (let i = 0; i < 5; i++) {
-      await addNote(t.db, { householdId: h.id, plantId: monstera, body: `monstera ${String(i)}` });
-    }
-    for (let i = 0; i < 2; i++) {
-      await addNote(t.db, { householdId: h.id, plantId: fern, body: `fern ${String(i)}` });
+    // Fill the household with plant notes, at most PLANT_NOTE_CAP per plant, and one
+    // household-wide note.
+    let added = 0;
+    for (let p = 0; added < HOUSEHOLD_NOTE_CAP - 1; p++) {
+      const plantId = await plantIn(h.id, `Plant ${String(p)}`);
+      for (let i = 0; i < PLANT_NOTE_CAP && added < HOUSEHOLD_NOTE_CAP - 1; i++, added++) {
+        await addNote(t.db, { householdId: h.id, plantId, body: `note ${String(i)}` });
+      }
     }
     await addNote(t.db, { householdId: h.id, body: 'north-facing flat' });
-    for (const plantId of [fern, undefined]) {
+    expect(await listActiveNotes(t.db, h.id)).toHaveLength(HOUSEHOLD_NOTE_CAP);
+
+    const fresh = await plantIn(h.id, 'Fresh plant');
+    for (const plantId of [fresh, undefined]) {
       await expect(addNote(t.db, { householdId: h.id, plantId, body: 'one more' })).rejects.toThrow(
-        /already 8 active notes in this household/,
+        new RegExp(`already ${String(HOUSEHOLD_NOTE_CAP)} active notes in this household`),
       );
     }
   });
