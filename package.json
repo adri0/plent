@@ -35,7 +35,7 @@
     "@ai-sdk/google": "4.0.114",
     "@ai-sdk/google-vertex": "5.0.134",
     "@ai-sdk/openai": "4.0.111",
-    "ai": "7.0.165",
+    "ai": "7.0.170",
     "kysely": "0.29.8",
     "pg": "8.23.1",
     "pino": "10.4.0",
