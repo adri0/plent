@@ -1,0 +1,22 @@
+# Tasks for local development (https://taskfile.dev): `task --list`.
+version: '3'
+
+vars:
+  # Colima, for machines that use it instead of Docker Desktop. The checkout's folder has to be
+  # mounted into the VM for Docker Compose's bind mounts; override with e.g. `task colima MOUNT=~/src`.
+  MOUNT: /Users/Shared/code
+  CPU: 4
+  MEMORY: 8
+
+tasks:
+  colima:
+    desc: Start the Colima VM (if it isn't running), with the code folder mounted
+    cmds:
+      - colima start --vm-type vz --mount-type virtiofs --cpu {{.CPU}} --memory {{.MEMORY}} --mount {{.MOUNT}}:w
+    status:
+      - colima status
+
+  colima:stop:
+    desc: Stop the Colima VM
+    cmds:
+      - colima stop
