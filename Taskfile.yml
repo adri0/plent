@@ -1,4 +1,7 @@
 # Tasks for local development (https://taskfile.dev): `task --list`.
+#
+# `task db` starts Postgres in Docker and migrates it. On macOS it first starts Colima when no Docker
+# daemon is reachable; with Docker Desktop running, or on Linux, Colima is skipped.
 version: '3'
 
 vars:
@@ -10,13 +13,45 @@ vars:
 
 tasks:
   colima:
-    desc: Start the Colima VM (if it isn't running), with the code folder mounted
+    desc: Start the Colima VM (macOS, when no Docker daemon is reachable), with the code folder mounted
+    platforms: [darwin]
     cmds:
       - colima start --vm-type vz --mount-type virtiofs --cpu {{.CPU}} --memory {{.MEMORY}} --mount {{.MOUNT}}:w
     status:
-      - colima status
+      - docker info >/dev/null 2>&1
 
   colima:stop:
     desc: Stop the Colima VM
+    platforms: [darwin]
     cmds:
       - colima stop
+
+  db:
+    desc: Start Postgres and run the migrations
+    deps: [colima]
+    cmds:
+      - docker compose up --detach --wait postgres
+      - docker compose run --rm migrate
+
+  db:stop:
+    desc: Stop the containers, keeping them and the data
+    cmds:
+      - docker compose stop
+
+  db:down:
+    desc: Remove the containers, keeping the data volume
+    cmds:
+      - docker compose down
+
+  db:reset:
+    desc: Remove the containers and the data volume, then start again with an empty database
+    prompt: This deletes the local database. Continue?
+    deps: [colima]
+    cmds:
+      - docker compose down --volumes
+      - task: db
+
+  db:logs:
+    desc: Follow the Postgres logs
+    cmds:
+      - docker compose logs --follow postgres
