@@ -4,10 +4,18 @@
 # daemon is reachable; with Docker Desktop running, or on Linux, Colima is skipped.
 version: '3'
 
+# COLIMA_MOUNT and other local settings can come from .env (git-ignored).
+dotenv: ['.env']
+
 vars:
   # Colima, for machines that use it instead of Docker Desktop. The checkout's folder has to be
-  # mounted into the VM for Docker Compose's bind mounts; override with e.g. `task colima MOUNT=~/src`.
-  MOUNT: /Users/Shared/code
+  # mounted into the VM for Docker Compose's bind mounts. By default that's this checkout, by its
+  # real path (Colima doesn't follow symlinks out of a mount). Set COLIMA_MOUNT in .env to mount a
+  # wider folder, e.g. one holding several repos, or override with `task colima MOUNT=~/src`.
+  # The mount is fixed when the VM is created: to change it, `colima stop` and start it again.
+  REPO_DIR:
+    sh: cd "{{.ROOT_DIR}}" && pwd -P
+  MOUNT: '{{.COLIMA_MOUNT | default .REPO_DIR}}'
   CPU: 4
   MEMORY: 8
 
@@ -16,7 +24,7 @@ tasks:
     desc: Start the Colima VM (macOS, when no Docker daemon is reachable), with the code folder mounted
     platforms: [darwin]
     cmds:
-      - colima start --vm-type vz --mount-type virtiofs --cpu {{.CPU}} --memory {{.MEMORY}} --mount {{.MOUNT}}:w
+      - colima start --vm-type vz --mount-type virtiofs --cpu {{.CPU}} --memory {{.MEMORY}} --mount "{{.MOUNT}}:w"
     status:
       - docker info >/dev/null 2>&1
 
