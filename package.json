@@ -10,10 +10,12 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "db:migrate": "node --env-file-if-exists=.env scripts/migrate.ts",
+    "eval": "node --env-file-if-exists=.env evals/runner.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint .",
     "model:ping": "node --env-file-if-exists=.env scripts/model-ping.ts",
+    "repl": "node --env-file-if-exists=.env scripts/repl.ts",
     "test": "vitest run --project unit",
     "test:integration": "node --env-file-if-exists=.env node_modules/vitest/vitest.mjs run --project integration",
     "test:watch": "vitest --project unit",

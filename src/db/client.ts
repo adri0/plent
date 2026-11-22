@@ -17,3 +17,9 @@ export function createDb(connectionString: string): Db {
     }),
   });
 }
+
+// Runs `fn` in a transaction, or inside the caller's one when `db` already is a transaction,
+// so a domain write and the agent's `tool_calls` record can commit together.
+export function inTransaction<T>(db: Db, fn: (trx: Db) => Promise<T>): Promise<T> {
+  return db.isTransaction ? fn(db) : db.transaction().execute(fn);
+}

@@ -31,6 +31,8 @@ docker compose up                 # Postgres, then migrations to the latest sche
 | `npm test`                 | Unit tests                                           |
 | `npm run test:integration` | Integration tests against Postgres at `DATABASE_URL` |
 | `npm run build`            | Compile `src/` to `dist/`                            |
+| `npm run repl`             | Chat with the agent in the terminal (needs a model)  |
+| `npm run eval`             | Run the eval suite against a model                   |
 
 Source files import each other with `.ts` extensions: Node 26 runs TypeScript directly, and `tsc`
 rewrites the extensions when it builds.
@@ -53,3 +55,22 @@ Environment variables, validated at startup by `src/config.ts` (see `.env.exampl
 
 Logs are JSON lines with a Cloud Logging `severity`. They carry IDs and statuses, never message bodies:
 `body`, `text`, `prompt` and similar keys are removed.
+
+## The agent
+
+`src/agent/` answers one trigger message at a time: it builds the context (household block with short
+plant and note refs like `p1` and `n1`, the last 20 messages or 72 hours, the message and what it
+quotes), lets the model call its nine tools for up to five steps, and post-processes the reply for
+WhatsApp. Each tool call is recorded in `tool_calls` with its effect, so a retried trigger replays it
+instead of running it twice. The system prompt is in `src/agent/prompt.ts`.
+
+**REPL.** `npm run repl -- [--chat dev] [--as Anna] [--tz Europe/Warsaw]` chats with the agent through
+the fake chat adapter, as a group household in the database at `DATABASE_URL` (activated on first
+use). Type messages as the current sender; `/as <name>` switches sender, `/reply` quotes Ent's last
+message with your next one, `/digest` sends today's reminder. Tool calls are shown under each reply.
+
+**Evals.** `npm run eval` runs every scenario in `evals/scenarios/` three times on a scratch database
+each; a scenario passes when two runs pass. Checks look at the database and the tool calls, never at
+the wording. Options: `--model provider:id` (repeat to compare models; keys and locations come from the
+usual variables), `--only name,name`, `--runs`, `--pass`, `--concurrency`. A JSON report goes to
+`evals/results/`.

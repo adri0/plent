@@ -1,4 +1,4 @@
-import type { Db } from '../db/client.ts';
+import { inTransaction, type Db } from '../db/client.ts';
 import type { PlantNote } from '../db/schema.ts';
 import { DomainError } from './errors.ts';
 import { getActivePlant } from './plants.ts';
@@ -29,7 +29,7 @@ export async function addNote(db: Db, input: NewNoteInput): Promise<PlantNote> {
     );
   }
 
-  return db.transaction().execute(async (trx) => {
+  return inTransaction(db, async (trx) => {
     const plant =
       input.plantId === undefined
         ? undefined

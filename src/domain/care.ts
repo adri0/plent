@@ -1,4 +1,4 @@
-import type { Db } from '../db/client.ts';
+import { inTransaction, type Db } from '../db/client.ts';
 import type { CareAction, CareEvent, TaskType } from '../db/schema.ts';
 import { isIsoDate, type IsoDate } from './dates.ts';
 import { DomainError } from './errors.ts';
@@ -46,7 +46,7 @@ export async function logCare(db: Db, input: LogCareInput): Promise<LoggedCare[]
     throw new DomainError('invalid_input', 'recheck_in_days goes with skipped only');
   }
 
-  return db.transaction().execute(async (trx) => {
+  return inTransaction(db, async (trx) => {
     const targets = await findTargets(trx, input);
     const logged: LoggedCare[] = [];
     for (const target of targets) {

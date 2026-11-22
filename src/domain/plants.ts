@@ -1,4 +1,4 @@
-import type { Db } from '../db/client.ts';
+import { inTransaction, type Db } from '../db/client.ts';
 import type { CareSchedule, Plant, TaskType } from '../db/schema.ts';
 import { daysBetween, type IsoDate } from './dates.ts';
 import { DomainError } from './errors.ts';
@@ -46,7 +46,7 @@ export async function addPlant(
     tasks.set(task.taskType, task.intervalDays);
   }
 
-  return db.transaction().execute(async (trx) => {
+  return inTransaction(db, async (trx) => {
     const plant = await trx
       .insertInto('plants')
       .values({
